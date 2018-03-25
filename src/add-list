@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e
+
+for item in "$@"; do
+  list="$HOME/Documents/verbula/$item"
+
+  if ! [ -f $list ]; then
+     echo "#!/usr/bin/env verbula.py" > $list
+     chmod a+x $list
+  fi
+
+  ${EDITOR:-nano} $list
+done

@@ -5,7 +5,7 @@ setup(
     name="Verbula",
     version="0.1",
     packages=find_packages(),
-    scripts=['src/verbula.py'],
+    scripts=['src/verbula.py', 'src/add-list'],
 
     install_requires=['unidecode>=1.0.0'],
 
