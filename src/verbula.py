@@ -2,7 +2,7 @@
 """
 Python3 script to help you study your vocabulary
 
-Copyright (C) 2017  Aimilius
+Copyright (C) 2018  Emiel Wiedijk
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
