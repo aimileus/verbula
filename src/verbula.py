@@ -29,12 +29,12 @@ import unidecode
 
 
 def say(text):
-    return subprocess.Popen(['say', '-v', ARGS.voice, text])
+    return subprocess.Popen(["say", "-v", ARGS.voice, text])
 
 
 def edit():
     # We split to handle spaces in EDITOR
-    editor = os.getenv('EDITOR', 'nano').split()
+    editor = os.getenv("EDITOR", "nano").split()
     subprocess.run(editor + ARGS.lists)
 
 
@@ -53,10 +53,10 @@ class WordList:
             try:
                 with open(list_file) as word_list_file:
                     for line in word_list_file:
-                        if len(line.strip()) is 0:  # Do not add emtpy lines
+                        if not line.strip():  # Do not add emtpy lines
                             pass
                         # Lines starting with a '#' are comments
-                        elif line[0] == '#':
+                        elif line[0] == "#":
                             pass
                         else:
                             self.list.append(Item(line))
@@ -86,18 +86,18 @@ class WordList:
 
     def answer_false(self, word):
         answers = " = ".join(word.answers)
-        if word.type == 'dictation':
+        if word.type == "dictation":
             print(word.question)
         else:
             print(f"{word.question} = {answers}")
 
         response = input()
-        if 'e' in response:
+        if "e" in response:
             edit()
-        if 'r' in response:
+        if "r" in response:
             self.restart()
             return
-        if 'g' in response:
+        if "g" in response:
             self.answer_good()
             return
 
@@ -110,14 +110,16 @@ class WordList:
         self.__init__(self.list_files)
 
     def finish(self, exitcode=0):
-        subprocess.run(['clear'])
-        print(f"{self.passes} answer(s) correct, \
-{self.fails} answer(s) incorrect")
+        subprocess.run(["clear"])
+        print(
+            f"{self.passes} answer(s) correct, \
+{self.fails} answer(s) incorrect"
+        )
         end = time.time()
         elapsed = int(end - self.start)
         minutes = elapsed // 60
         seconds = elapsed % 60
-        print(f'{minutes} minute(s) and {seconds} second(s) elapsed')
+        print(f"{minutes} minute(s) and {seconds} second(s) elapsed")
         sys.exit(exitcode)
 
     def print_status_bar(self):
@@ -129,25 +131,25 @@ class WordList:
             columns = 80
         if completion > 1:
             completion = 1
-        counter = f'[{left_list}]'
+        counter = f"[{left_list}]"
         left_space = columns - len(counter)
-        whitespace = ' ' * int(left_space * completion)
-        bars = '#' * (columns - len(counter) - len(whitespace))
-        print(f'{bars}{whitespace}{counter}')
+        whitespace = " " * int(left_space * completion)
+        bars = "#" * (columns - len(counter) - len(whitespace))
+        print(f"{bars}{whitespace}{counter}")
 
 
 def clear():
-    subprocess.run(['clear'])
+    subprocess.run(["clear"])
     WORD_LIST.print_status_bar()
 
 
 def public_format(word):
     # Replace Apple's 'smart punctuation' with normal punctuation
     word = word.replace("’", "''")
-    word = word.replace('”', '"')
-    word = word.replace('…', '...')
+    word = word.replace("”", '"')
+    word = word.replace("…", "...")
     # Squash all whitespace into a single space
-    word = ' '.join(word.split())
+    word = " ".join(word.split())
     # Remove whitespace at the end
     word = word.strip()
     return word
@@ -156,13 +158,14 @@ def public_format(word):
 def private_format(word):
     # Ignore punctuation by removing these characters from the string
     if ARGS.strict:
-        return ' '.join(word.split())
-    punctuation_away = str.maketrans(',.+-;:\\/()!\'"?><!@#$%^&*±',
-                                     '                         ')
+        return " ".join(word.split())
+    punctuation_away = str.maketrans(
+        ",.+-;:\\/()!'\"?><!@#$%^&*±", "                         "
+    )
     word = word.translate(punctuation_away)
     word = word.lower()  # Be case-insensitive.
     # Squash all whitespace into a single space
-    word = ' '.join(word.split())
+    word = " ".join(word.split())
     word = word.strip()  # We split again in self.check_answer()
     if ARGS.unidecode:
         word = unidecode.unidecode(word)
@@ -172,13 +175,13 @@ def private_format(word):
 def check_answer(answer, user_answer):
     """Return True if answer is correct, False if not."""
     user_answer = private_format(user_answer)
-    answer = [private_format(item) for item in answer.split(',')]
+    answer = [private_format(item) for item in answer.split(",")]
 
     for item in answer:
         # The user must give all correct answers
         if item not in user_answer:
             return False
-        user_answer = user_answer.replace(item, '', 1)
+        user_answer = user_answer.replace(item, "", 1)
 
     return not user_answer.strip()
 
@@ -187,12 +190,12 @@ class Item:
     def __init__(self, words):
         """Load the question and answer(s) separated by an '='."""
         if ARGS.dictation:
-            self.type = 'dictation'
+            self.type = "dictation"
             self.question = public_format(words)
             self.answers = [self.question]
             return
 
-        words = [public_format(word) for word in words.split('=')]
+        words = [public_format(word) for word in words.split("=")]
 
         if ARGS.reverse:
             # The question is the last item in the list
@@ -202,38 +205,40 @@ class Item:
         self.answers = words
 
         if len(self.answers) == 1:
-            self.type = 'singular'
+            self.type = "singular"
         elif len(self.answers) > 1:
-            self.type = 'plural'
+            self.type = "plural"
         else:
-            print(f'Error: "{self.question}", unexpected newline, \
-expected "="')
+            print(
+                f'Error: "{self.question}", unexpected newline, \
+expected "="'
+            )
             sys.exit(1)
 
     def ask_answers(self):
         """Return a list of what the user thinks the answer is."""
         clear()
 
-        if self.type == 'singular':
+        if self.type == "singular":
             return self.ask_answers_singular()
 
-        elif self.type == 'plural':
+        elif self.type == "plural":
             return self.ask_answers_plural
 
-        elif self.type == 'dictation':
+        elif self.type == "dictation":
             return self.ask_answers_dictation()
 
     def ask_answers_singular(self):
         answer = [input(f"{self.question} = ")]
         # Do not accept empty answers
-        while answer == ['']:
+        while answer == [""]:
             clear()
             answer = [input(f"{self.question} = ")]
         return answer
 
     def ask_answers_dictation(self):
-        answer = ['']
-        while answer == ['']:
+        answer = [""]
+        while answer == [""]:
             clear()
             say(self.question)
             answer = [input()]
@@ -242,14 +247,14 @@ expected "="')
     @property
     def ask_answers_plural(self):
         len_question = len(self.question)
-        before = (len_question * ' ') + " = "
+        before = (len_question * " ") + " = "
         answers = [input(f"{self.question} = ")]
 
         for _ in range(len(self.answers)):
             answer = input(before)
 
             # The last answer must not be empty
-            if answer == '':
+            if answer == "":
                 return self.ask_answers()
             answers.append(answer)
 
@@ -269,23 +274,37 @@ def quit_verbula(exitcode=0):
 
 
 def create_parser():
-    parser = argparse.ArgumentParser('Get CLI options')
-    parser.add_argument('lists', nargs='+',
-                        help='the files that contain the lists')
-    parser.add_argument('--reverse', '-r', action='store_true',
-                        help='the question is the last item in the list')
-    parser.add_argument('--unidecode', '-u', action='store_true',
-                        help='represent unicode as ascii \
-                        (i.e. remove accents)')
-    parser.add_argument('--dictation', '-d', action='store_true',
-                        help='use tts instead of print')
-    parser.add_argument('--strict', '-s', action='store_true',
-                        help="Don't ignore punctuation and capitals")
-    parser.add_argument('--voice', help="Select which macOS tts voice verbula should use")
+    parser = argparse.ArgumentParser("Get CLI options")
+    parser.add_argument("lists", nargs="+", help="the files that contain the lists")
+    parser.add_argument(
+        "--reverse",
+        "-r",
+        action="store_true",
+        help="the question is the last item in the list",
+    )
+    parser.add_argument(
+        "--unidecode",
+        "-u",
+        action="store_true",
+        help="represent unicode as ascii \
+                        (i.e. remove accents)",
+    )
+    parser.add_argument(
+        "--dictation", "-d", action="store_true", help="use tts instead of print"
+    )
+    parser.add_argument(
+        "--strict",
+        "-s",
+        action="store_true",
+        help="Don't ignore punctuation and capitals",
+    )
+    parser.add_argument(
+        "--voice", help="Select which macOS tts voice verbula should use"
+    )
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         ARGS = create_parser()
         WORD_LIST = WordList(ARGS.lists)
